@@ -43,6 +43,7 @@ export class ReportGenerationJob implements Job {
             (t) => t.taskId !== task.taskId,
         );
 
+        // the requirments say to only run this job after all preceding tasks are completed, but it does not clarify about tasks which are after this one, so I interpreted like this. But if it should be run LAST, then another approach should be taken. I took this into consideration when thinking about this approach
         const taskEntries: ReportTaskEntry[] = await Promise.all(
             siblingTasks.map(async (siblingTask) => {
                 if (siblingTask.status === TaskStatus.Failed)
