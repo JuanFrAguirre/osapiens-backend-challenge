@@ -29,10 +29,8 @@ export async function taskWorker() {
                 console.error(
                     `Task execution failed. Task status has already been updated by TaskRunner.\n`,
                     error,
+                    `\n`,
                 );
-
-                // added this for readability
-                console.log(`\n-----------------------\n`);
             }
         }
 

@@ -40,7 +40,7 @@ export class TaskRunner {
             console.log(
                 `Starting job ${task.taskType} for task ${task.taskId}...`,
             );
-            const taskResult = await job.run(task);
+            const taskResult = await job.run(task, input);
             console.log(
                 `Job ${task.taskType} for task ${task.taskId} completed successfully.\n`,
             );
@@ -79,19 +79,65 @@ export class TaskRunner {
             const anyFailed = currentWorkflow.tasks.some(
                 (t) => t.status === TaskStatus.Failed,
             );
+            const allTerminal = currentWorkflow.tasks.every(
+                (t) =>
+                    t.status === TaskStatus.Completed ||
+                    t.status === TaskStatus.Failed,
+            );
 
             if (anyFailed) {
                 currentWorkflow.status = WorkflowStatus.Failed;
             } else if (allCompleted) {
-                // added this for readability
-                console.log(`\n-----------------------\n`);
                 currentWorkflow.status = WorkflowStatus.Completed;
             } else {
                 currentWorkflow.status = WorkflowStatus.InProgress;
             }
 
+            if (allTerminal) {
+                // added this for readability
+                console.log(`\n-----------------------\n`);
+                currentWorkflow.finalResult = JSON.stringify(
+                    await this.buildFinalResult(currentWorkflow),
+                );
+            }
+
             await workflowRepository.save(currentWorkflow);
         }
+    }
+
+    private async buildFinalResult(workflow: Workflow) {
+        const resultRepository =
+            this.taskRepository.manager.getRepository(Result);
+
+        const tasks = await Promise.all(
+            workflow.tasks.map(async (t) => {
+                if (t.status === TaskStatus.Failed) {
+                    return {
+                        taskId: t.taskId,
+                        type: t.taskType,
+                        status: t.status,
+                        error: 'Task failed',
+                    };
+                }
+                const result = t.resultId
+                    ? await resultRepository.findOne({
+                          where: { resultId: t.resultId },
+                      })
+                    : null;
+                return {
+                    taskId: t.taskId,
+                    type: t.taskType,
+                    status: t.status,
+                    output: result?.data ? JSON.parse(result.data) : null,
+                };
+            }),
+        );
+
+        return {
+            workflowId: workflow.workflowId,
+            status: workflow.status,
+            tasks,
+        };
     }
 
     private async resolveDependencyInput(task: Task): Promise<unknown> {
