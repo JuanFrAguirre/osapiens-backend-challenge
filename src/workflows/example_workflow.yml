@@ -6,3 +6,5 @@ steps:
       stepNumber: 2
     - taskType: 'polygonArea'
       stepNumber: 3
+    - taskType: 'reportGeneration'
+      stepNumber: 4

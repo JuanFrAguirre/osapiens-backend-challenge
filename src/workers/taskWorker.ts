@@ -10,6 +10,7 @@ export async function taskWorker() {
         const task = await taskRepository.findOne({
             where: { status: TaskStatus.Queued },
             relations: ['workflow'], // Ensure workflow is loaded
+            order: { stepNumber: 'ASC' }, // This is to make sure that the tasks are exectued in the correct order
         });
 
         if (task) {
@@ -17,9 +18,12 @@ export async function taskWorker() {
                 await taskRunner.run(task);
             } catch (error) {
                 console.error(
-                    'Task execution failed. Task status has already been updated by TaskRunner.'
+                    `Task execution failed. Task status has already been updated by TaskRunner.\n`,
+                    error,
                 );
-                console.error(error);
+
+                // added this for readability
+                console.log(`\n-----------------------\n`);
             }
         }
 
