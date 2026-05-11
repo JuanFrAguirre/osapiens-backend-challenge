@@ -1,3 +1,4 @@
+import { In, IsNull } from 'typeorm';
 import { AppDataSource } from '../data-source';
 import { Task } from '../models/Task';
 import { TaskRunner, TaskStatus } from './taskRunner';
@@ -8,8 +9,16 @@ export async function taskWorker() {
 
     while (true) {
         const task = await taskRepository.findOne({
-            where: { status: TaskStatus.Queued },
-            relations: ['workflow'], // Ensure workflow is loaded
+            where: [
+                { status: TaskStatus.Queued, dependency: IsNull() },
+                {
+                    status: TaskStatus.Queued,
+                    dependency: {
+                        status: In([TaskStatus.Completed, TaskStatus.Failed]),
+                    },
+                },
+            ],
+            relations: ['workflow', 'dependency'], // Ensure workflow is loaded
             order: { stepNumber: 'ASC' }, // This is to make sure that the tasks are exectued in the correct order
         });
 

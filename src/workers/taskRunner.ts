@@ -24,14 +24,22 @@ export class TaskRunner {
         task.status = TaskStatus.InProgress;
         task.progress = 'starting job...';
         await this.taskRepository.save(task);
+
         const job = getJobForTaskType(task.taskType);
+        const resultRepository =
+            this.taskRepository.manager.getRepository(Result);
 
         try {
+            if (task.dependency?.status === TaskStatus.Failed)
+                throw new Error(
+                    `Dependency task ${task.dependency.taskId} failed`,
+                );
+
+            const input = await this.resolveDependencyInput(task);
+
             console.log(
                 `Starting job ${task.taskType} for task ${task.taskId}...`,
             );
-            const resultRepository =
-                this.taskRepository.manager.getRepository(Result);
             const taskResult = await job.run(task);
             console.log(
                 `Job ${task.taskType} for task ${task.taskId} completed successfully.\n`,
@@ -84,5 +92,17 @@ export class TaskRunner {
 
             await workflowRepository.save(currentWorkflow);
         }
+    }
+
+    private async resolveDependencyInput(task: Task): Promise<unknown> {
+        if (!task.dependency || !task.dependency.resultId) {
+            return undefined;
+        }
+        const resultRepository =
+            this.taskRepository.manager.getRepository(Result);
+        const result = await resultRepository.findOne({
+            where: { resultId: task.dependency.resultId },
+        });
+        return result?.data ? JSON.parse(result.data) : undefined;
     }
 }
