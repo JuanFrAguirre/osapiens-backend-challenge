@@ -385,6 +385,7 @@ Example flow:
      `GET /workflow/:id/results` returns `200` for both `completed` and `failed` instead of `400` for failed runs. One can inspect per-task failure details via the `finalResult.tasks[]` entries.
 - **`WorkflowFactory` validates dependencies before saving:**
      Bad `dependsOn` references throw before any DB write, preventing the route from returning `500` while still queueing orphan tasks for the worker to pick up.
-- **`Job.run(task, input?)` interface extension is non-breaking.** Existing jobs (analysis, notification) ignore the second argument and still satisfy the interface. Jobs that care about dependency outputs can read it directly.
+- **`Job.run(task, input?)` interface extension is non-breaking:**
+     Existing jobs (analysis, notification) ignore the second argument and still satisfy the interface. Jobs that care about dependency outputs can read it directly.
 
 ---
