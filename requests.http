@@ -48,3 +48,16 @@ GET {{host}}/workflow/{{createPoint.response.body.workflowId}}/status
 
 ### 404 — non-existent workflow status
 GET {{host}}/workflow/nonexistent-id/status
+
+###############################################################################
+# RETRIEVE WORKFLOW RESULTS
+###############################################################################
+
+### Brazil workflow results
+GET {{host}}/workflow/{{createBrazil.response.body.workflowId}}/results
+
+### point workflow results
+GET {{host}}/workflow/{{createPoint.response.body.workflowId}}/results
+
+### 404 — non-existent workflow results
+GET {{host}}/workflow/nonexistent-id/results
