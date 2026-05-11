@@ -377,13 +377,14 @@ Example flow:
 
 #### **Some Design Decisions**
 
-- **StepNumber ordering**
+- **StepNumber ordering:**
      The worker orders queued tasks by `stepNumber ASC` and, combined with the explicit `dependency` FK from Task 3, guarantees within-workflow ordering without a heavier scheduler. `ReportGenerationJob` relies on this to know its siblings have finished before aggregating their outputs.
-- **`finalResult` saved on terminal state, not on first failure.**
+- **`finalResult` saved on terminal state, not on first failure:**
      The workflow may have movd to `failed` as soon as one task would fail, but `finalResult` is only computed once every task has reached `completed` or `failed`. This stops it from being overwritten on each subsequent task transition and matches the Readme's "after the last task completes" wording.
-- **Failed workflows are still retrievable.**
+- **Failed workflows are still retrievable:**
      `GET /workflow/:id/results` returns `200` for both `completed` and `failed` instead of `400` for failed runs. One can inspect per-task failure details via the `finalResult.tasks[]` entries.
-- **`WorkflowFactory` validates dependencies before saving.** Bad `dependsOn` references throw before any DB write, preventing the route from returning `500` while still queueing orphan tasks for the worker to pick up.
+- **`WorkflowFactory` validates dependencies before saving:**
+     Bad `dependsOn` references throw before any DB write, preventing the route from returning `500` while still queueing orphan tasks for the worker to pick up.
 - **`Job.run(task, input?)` interface extension is non-breaking.** Existing jobs (analysis, notification) ignore the second argument and still satisfy the interface. Jobs that care about dependency outputs can read it directly.
 
 ---
